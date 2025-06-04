@@ -1,15 +1,31 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ImageUploader } from './components/ImageUploader';
 import { ColorPalette } from './components/ColorPalette';
 import { ColorPicker } from './components/ColorPicker';
 import { ThemeToggle } from './components/ThemeToggle';
 import { useTheme } from './contexts/ThemeContext';
+import { 
+  PhotoIcon,
+  SparklesIcon,
+  EyeDropperIcon,
+  LightBulbIcon
+} from '@heroicons/react/24/outline';
 
 interface Color {
   rgb: string;
   hex: string;
   count: number;
 }
+
+const quickFade = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.3 }
+  }
+};
 
 function App() {
   const [image, setImage] = useState<string | null>(null);
@@ -18,200 +34,256 @@ function App() {
   const { isDark } = useTheme();
 
   const TutorialSection = () => (
-    <div className={`${
-      isDark 
-        ? 'bg-white/5 border-white/10' 
-        : 'bg-black/5 border-black/10'
-    } backdrop-blur-sm rounded-3xl border p-6 transition-all duration-700 hover:backdrop-blur-md`}>
-      
-      <div className="text-center mb-8">
-        <h2 className={`text-xl font-medium mb-2 ${
-          isDark ? 'text-white/90' : 'text-black/90'
-        }`}>
-          How it works
-        </h2>
-        <p className={`text-sm ${
-          isDark ? 'text-white/50' : 'text-black/50'
-        }`}>
-          Extract and pick colors from any image
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        <div className={`p-4 rounded-2xl transition-all duration-300 ${
-          isDark 
-            ? 'bg-white/5 hover:bg-white/10' 
-            : 'bg-black/5 hover:bg-black/10'
-        }`}>
-          <div className="flex items-start space-x-3">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium ${
-              isDark 
-                ? 'bg-blue-500/20 text-blue-400' 
-                : 'bg-blue-100 text-blue-600'
-            }`}>
-              1
-            </div>
-            <div className="flex-1">
-              <h3 className={`text-sm font-medium mb-1 ${
-                isDark ? 'text-white/80' : 'text-black/80'
-              }`}>
-                Upload Image
-              </h3>
-              <p className={`text-xs ${
-                isDark ? 'text-white/50' : 'text-black/50'
-              }`}>
-                Drag & drop or click to upload any image file
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className={`p-4 rounded-2xl transition-all duration-300 ${
-          isDark 
-            ? 'bg-white/5 hover:bg-white/10' 
-            : 'bg-black/5 hover:bg-black/10'
-        }`}>
-          <div className="flex items-start space-x-3">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium ${
-              isDark 
-                ? 'bg-purple-500/20 text-purple-400' 
-                : 'bg-purple-100 text-purple-600'
-            }`}>
-              2
-            </div>
-            <div className="flex-1">
-              <h3 className={`text-sm font-medium mb-1 ${
-                isDark ? 'text-white/80' : 'text-black/80'
-              }`}>
-                Analyze Colors
-              </h3>
-              <p className={`text-xs ${
-                isDark ? 'text-white/50' : 'text-black/50'
-              }`}>
-                AI extracts dominant colors and creates a palette
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className={`p-4 rounded-2xl transition-all duration-300 ${
-          isDark 
-            ? 'bg-white/5 hover:bg-white/10' 
-            : 'bg-black/5 hover:bg-black/10'
-        }`}>
-          <div className="flex items-start space-x-3">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium ${
-              isDark 
-                ? 'bg-green-500/20 text-green-400' 
-                : 'bg-green-100 text-green-600'
-            }`}>
-              3
-            </div>
-            <div className="flex-1">
-              <h3 className={`text-sm font-medium mb-1 ${
-                isDark ? 'text-white/80' : 'text-black/80'
-              }`}>
-                Pick & Copy
-              </h3>
-              <p className={`text-xs ${
-                isDark ? 'text-white/50' : 'text-black/50'
-              }`}>
-                Click any color to copy its HEX code instantly
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className={`mt-6 p-4 rounded-2xl ${
-        isDark 
-          ? 'bg-white/5' 
-          : 'bg-black/5'
-      }`}>
-        <div className="text-center">
-          <h3 className={`text-sm font-medium mb-2 ${
-            isDark ? 'text-white/80' : 'text-black/80'
-          }`}>
-            Pro Tips
-          </h3>
-          <div className={`text-xs space-y-1 ${
-            isDark ? 'text-white/50' : 'text-black/50'
-          }`}>
-            <p>• High resolution images work best</p>
-            <p>• Try photos with varied color schemes</p>
-            <p>• Click anywhere on image to pick specific colors</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="text-center mt-6">
-        <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs ${
-          isDark 
-            ? 'bg-white/10 text-white/70' 
-            : 'bg-black/10 text-black/70'
-        }`}>
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
-          </svg>
-          <span>Upload an image to get started</span>
-        </div>
-      </div>
+  <motion.div
+    variants={quickFade}
+    initial="hidden"
+    animate="visible"
+    className={`relative ${
+      isDark
+        ? 'bg-gradient-to-br from-slate-900/90 to-slate-800/90 border-slate-700/50'
+        : 'bg-gradient-to-br from-white/90 to-gray-50/90 border-gray-200/50'
+    } backdrop-blur-xl rounded-3xl border shadow-2xl overflow-hidden transition-all duration-500`}
+  >
+    {/* Animated background gradient - SAME AS IMAGEUPLOADER */}
+    <div className="absolute inset-0 overflow-hidden rounded-3xl">
+      <motion.div
+        animate={{
+          background: isDark 
+            ? [
+                "radial-gradient(circle at 20% 80%, rgba(34, 197, 94, 0.1) 0%, transparent 50%)",
+                "radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)",
+                "radial-gradient(circle at 40% 40%, rgba(168, 85, 247, 0.1) 0%, transparent 50%)"
+              ]
+            : [
+                "radial-gradient(circle at 20% 80%, rgba(34, 197, 94, 0.05) 0%, transparent 50%)",
+                "radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%)",
+                "radial-gradient(circle at 40% 40%, rgba(168, 85, 247, 0.05) 0%, transparent 50%)"
+              ]
+        }}
+        transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+        className="absolute inset-0"
+      />
     </div>
-  );
+
+    {/* Header - SAME STYLE AS IMAGEUPLOADER */}
+    <motion.div 
+      className="relative flex items-center justify-between p-6"
+    >
+      <div className="flex items-center space-x-3">
+        <motion.div
+          whileHover={{ rotate: 180, scale: 1.1 }}
+          transition={{ duration: 0.3 }}
+          className={`p-2 rounded-xl ${
+            isDark ? 'bg-slate-800/50' : 'bg-gray-100/50'
+          }`}
+        >
+          <LightBulbIcon className={`w-6 h-6 ${
+            isDark ? 'text-yellow-400' : 'text-yellow-600'
+          }`} />
+        </motion.div>
+        <div>
+          <h3 className={`text-2xl font-bold ${
+            isDark ? 'text-white/95' : 'text-slate-900'
+          }`}>
+            How It Works
+          </h3>
+          <p className={`text-sm ${
+            isDark ? 'text-slate-400' : 'text-slate-600'
+          }`}>
+            Simple color extraction in 3 steps
+          </p>
+        </div>
+      </div>
+    </motion.div>
+
+    {/* Content area - SAME STRUCTURE */}
+    <div className="px-6 pb-6">
+      <div className="space-y-4">
+        {[
+          {
+            step: 1,
+            title: 'Upload',
+            description: 'Drop your image',
+            icon: PhotoIcon,
+            color: 'blue',
+          },
+          {
+            step: 2,
+            title: 'Extract',
+            description: 'Get color palette',
+            icon: SparklesIcon,
+            color: 'purple',
+          },
+          {
+            step: 3,
+            title: 'Pick',
+            description: 'Copy any color',
+            icon: EyeDropperIcon,
+            color: 'green',
+          },
+        ].map((item, index) => {
+          const colorClasses = {
+            blue: isDark ? 'text-blue-400 bg-blue-500/15' : 'text-blue-600 bg-blue-50',
+            purple: isDark ? 'text-purple-400 bg-purple-500/15' : 'text-purple-600 bg-purple-50',
+            green: isDark ? 'text-green-400 bg-green-500/15' : 'text-green-600 bg-green-50',
+          };
+
+          return (
+            <motion.div
+              key={item.step}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className={`flex items-center space-x-3 p-3 rounded-xl transition-colors ${
+                isDark ? 'hover:bg-slate-800/50' : 'hover:bg-gray-50'
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colorClasses[item.color as keyof typeof colorClasses]}`}>
+                <item.icon className="w-4 h-4" />
+              </div>
+              <div className="flex-1">
+                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                  {item.title}
+                </h3>
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {item.description}
+                </p>
+              </div>
+              <span className={`text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center ${colorClasses[item.color as keyof typeof colorClasses]}`}>
+                {item.step}
+              </span>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+        className={`mt-4 p-3 rounded-xl ${
+          isDark ? 'bg-slate-800/40' : 'bg-gray-50'
+        }`}
+      >
+        <div className="flex items-center space-x-2 mb-2">
+          <LightBulbIcon className={`w-4 h-4 ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`} />
+          <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            Tip
+          </span>
+        </div>
+        <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+          High-resolution images work best for accurate color extraction
+        </p>
+      </motion.div>
+    </div>
+  </motion.div>
+);
 
   return (
-    <div className={`min-h-screen transition-all duration-700 ${
+    <div className={`min-h-screen transition-colors ${
       isDark 
-        ? 'bg-gradient-to-br from-slate-900 to-slate-800' 
+        ? 'bg-gradient-to-br from-slate-950 to-slate-900' 
         : 'bg-gradient-to-br from-gray-50 to-white'
-    } p-4 md:p-8`}>
+    } p-4 md:p-6`}>
       
-      <div className="fixed top-6 right-6 z-50">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
+        className="fixed top-4 right-4 z-50"
+      >
         <ThemeToggle />
-      </div>
+      </motion.div>
 
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h1 className={`text-5xl md:text-7xl font-bold mb-4 tracking-tight ${
+      <div className="max-w-6xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="text-center mb-8"
+        >
+          <h1 className={`text-4xl md:text-5xl font-bold mb-2 ${
             isDark 
-              ? 'text-white' 
-              : 'text-black'
+              ? 'text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-blue-400' 
+              : 'text-slate-900'
           }`}>
             IroHana
           </h1>
-          <p className={`text-lg ${
-            isDark ? 'text-white/60' : 'text-black/60'
-          }`}>
-            Color extraction made simple
+          <p className={`text-base ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            Extract colors from any image
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          <div className="space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <motion.div 
+            variants={quickFade}
+            initial="hidden"
+            animate="visible"
+            className="space-y-6"
+          >
             <ImageUploader 
               onImageLoad={setImage}
               onColorsExtracted={setDominantColors}
+              hasImage={!!image}
             />
             
-            {image && (
-              <ColorPicker 
-                imageUrl={image}
-                onColorSelect={setSelectedColor}
-              />
-            )}
-          </div>
+            <AnimatePresence>
+              {image && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <ColorPicker 
+                    imageUrl={image}
+                    onColorSelect={setSelectedColor}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
           
-          <div className="space-y-8">
-            {dominantColors.length > 0 ? (
-              <ColorPalette 
-                colors={dominantColors}
-                selectedColor={selectedColor}
-              />
-            ) : (
-              <TutorialSection />
-            )}
+          <div>
+            <AnimatePresence mode="wait">
+              {dominantColors.length > 0 ? (
+                <motion.div
+                  key="palette"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ColorPalette 
+                    colors={dominantColors}
+                    selectedColor={selectedColor}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="tutorial"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <TutorialSection />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
+
+        <motion.footer
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.3 }}
+          className="text-center mt-12 pt-6 border-t border-gray-200/20"
+        >
+          <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+            © 2024 IroHana
+          </p>
+        </motion.footer>
       </div>
     </div>
   );
