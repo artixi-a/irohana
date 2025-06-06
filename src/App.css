@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Keep mono for hex codes */
+.font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -35,3 +46,4 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-slate-400 dark:bg-slate-500;
 }
+

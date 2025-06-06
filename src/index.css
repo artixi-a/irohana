@@ -1,7 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
+* {
+  font-family: 'Poppins', system-ui, sans-serif;
+}
+
+/* Keep mono for hex codes */
+.font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
