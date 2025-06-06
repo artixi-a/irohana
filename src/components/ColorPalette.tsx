@@ -46,7 +46,7 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({ colors, selectedColo
         <SwatchIcon className={`w-6 h-6 ${
           isDark ? 'text-violet-400' : 'text-violet-600'
         }`} />
-        <h3 className={`text-xl font-medium ${
+        <h3 className={`text-xl cursor-default font-medium ${
           isDark ? 'text-white' : 'text-slate-900'
         }`}>
           Color Palette

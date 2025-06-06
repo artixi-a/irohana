@@ -132,7 +132,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         <CloudArrowUpIcon className={`w-6 h-6 ${
           isDark ? 'text-blue-400' : 'text-blue-600'
         }`} />
-        <h3 className={`text-xl font-medium ${
+        <h3 className={`text-xl cursor-default font-medium ${
           isDark ? 'text-white' : 'text-slate-900'
         }`}>
           Upload Image

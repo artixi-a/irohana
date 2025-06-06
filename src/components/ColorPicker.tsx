@@ -269,7 +269,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
           <EyeDropperIcon className={`w-6 h-6 ${
             isDark ? 'text-pink-400' : 'text-pink-600'
           }`} />
-          <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-medium ${
+          <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} cursor-default font-medium ${
             isDark ? 'text-white' : 'text-slate-900'
           }`}>
             Color Picker
@@ -408,7 +408,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className={`${isMobile ? 'text-xs' : 'text-sm'} mt-4 text-center ${
+          className={`${isMobile ? 'text-xs' : 'text-sm'} mt-4 text-center cursor-default ${
             isDark ? 'text-slate-400' : 'text-slate-600'
           }`}
         >
