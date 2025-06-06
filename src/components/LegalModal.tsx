@@ -181,10 +181,7 @@ export const LegalModal: React.FC<LegalModalProps> = ({ isOpen, onClose, type })
                 <CheckCircleIcon className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <span className="text-base">This service is provided free of charge for personal and commercial use</span>
               </li>
-              <li className="flex items-start space-x-3">
-                <XCircleIcon className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-                <span className="text-base">You may not reverse engineer or attempt to extract the source code</span>
-              </li>
+
               <li className="flex items-start space-x-3">
                 <XCircleIcon className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
                 <span className="text-base">You may not use this service for any unlawful purpose</span>

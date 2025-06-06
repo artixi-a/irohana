@@ -2,7 +2,7 @@ import React, { useCallback, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { extractDominantColors } from '../utils/colorExtractor';
 import { useTheme } from '../contexts/ThemeContext';
-import { CloudArrowUpIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import { CloudArrowUpIcon, PhotoIcon, ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 interface ImageUploaderProps {
   onImageLoad: (imageUrl: string) => void;
@@ -17,10 +17,26 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { isDark } = useTheme();
 
+  const showErrorMessage = (message: string) => {
+    setErrorMessage(message);
+    setShowError(true);
+    setTimeout(() => setShowError(false), 4000);
+  };
+
   const processFile = useCallback(async (file: File) => {
+    const maxSize = 10 * 1024 * 1024;
+    
+    if (file.size > maxSize) {
+      const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
+      showErrorMessage(`File size (${sizeInMB}MB) exceeds the 10MB limit. Please choose a smaller image.`);
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const imageUrl = URL.createObjectURL(file);
@@ -29,6 +45,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       onColorsExtracted(colors);
     } catch (error) {
       console.error('Error processing image:', error);
+      showErrorMessage('Failed to process the image. Please try a different file.');
     } finally {
       setIsLoading(false);
     }
@@ -66,6 +83,42 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           : 'bg-white border-gray-200'
       } backdrop-blur-sm border rounded-2xl p-8 transition-colors`}
     >
+      {/* Error Toast */}
+      <AnimatePresence>
+        {showError && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            className="absolute top-4 left-4 right-4 z-10"
+          >
+            <div className={`${
+              isDark 
+                ? 'bg-red-900/90 border-red-700 text-red-200' 
+                : 'bg-red-50 border-red-200 text-red-800'
+            } border rounded-xl p-4 backdrop-blur-sm shadow-lg`}>
+              <div className="flex items-start space-x-3">
+                <ExclamationTriangleIcon className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium mb-1">Upload Error</p>
+                  <p className="text-xs opacity-90">{errorMessage}</p>
+                </div>
+                <button
+                  onClick={() => setShowError(false)}
+                  className={`p-1 rounded-lg transition-colors ${
+                    isDark 
+                      ? 'hover:bg-red-800/50' 
+                      : 'hover:bg-red-100'
+                  }`}
+                >
+                  <XMarkIcon className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <input
         ref={fileInputRef}
         type="file"
@@ -158,6 +211,11 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                   isDark ? 'text-slate-400' : 'text-slate-600'
                 }`}>
                   {isDragging ? 'Release to upload' : 'or drag and drop here'}
+                </p>
+                <p className={`text-xs mt-1 ${
+                  isDark ? 'text-slate-500' : 'text-slate-500'
+                }`}>
+                  Max file size: 10MB
                 </p>
               </div>
             </motion.div>
