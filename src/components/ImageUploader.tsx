@@ -12,8 +12,7 @@ interface ImageUploaderProps {
 
 export const ImageUploader: React.FC<ImageUploaderProps> = ({ 
   onImageLoad, 
-  onColorsExtracted,
-  hasImage = false
+  onColorsExtracted
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

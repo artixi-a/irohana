@@ -15,10 +15,8 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
   const zoomCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isHovering, setIsHovering] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [canvasMousePos, setCanvasMousePos] = useState({ x: 0, y: 0 });
   const [previewColor, setPreviewColor] = useState<string | null>(null);
   const [recentlyCopied, setRecentlyCopied] = useState(false);
-  const [canvasDimensions, setCanvasDimensions] = useState({ width: 0, height: 0 });
   const [zoomLevel, setZoomLevel] = useState<2 | 4 | 8>(4);
   const [isMobile, setIsMobile] = useState(false);
   const { isDark } = useTheme();
@@ -47,7 +45,6 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
       const containerWidth = container.clientWidth;
       const maxHeight = isMobile ? 400 : 600;
       const minHeight = isMobile ? 250 : 300;
-      const minWidth = isMobile ? 250 : 300;
       
       const imgAspectRatio = img.width / img.height;
       
@@ -106,7 +103,6 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
       canvas.style.width = `${canvasWidth}px`;
       canvas.style.height = `${canvasHeight}px`;
       
-      setCanvasDimensions({ width: canvasWidth, height: canvasHeight });
       ctx.drawImage(img, 0, 0);
     };
   }, [imageUrl, isMobile]);
@@ -210,8 +206,6 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
       y: event.clientY 
     });
 
-    setCanvasMousePos({ x, y });
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -237,7 +231,6 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
     
     // Keep tooltip within viewport bounds
     const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
     
     // Horizontal positioning
     if (mousePos.x - tooltipWidth / 2 < 10) {
@@ -289,7 +282,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
                 <button
                   key={level}
                   onClick={() => setZoomLevel(level)}
-                  className={`${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1 text-sm'} font-medium rounded-md transition-all ${
+                  className={`${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1 text-sm'} font-medium rounded-md transition-all cursor-default ${
                     zoomLevel === level
                       ? isDark
                         ? 'bg-pink-500 text-white shadow-sm'
