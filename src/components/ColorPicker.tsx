@@ -19,6 +19,12 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
   const [recentlyCopied, setRecentlyCopied] = useState(false);
   const [zoomLevel, setZoomLevel] = useState<2 | 4 | 8>(4);
   const [isMobile, setIsMobile] = useState(false);
+  // New mobile touch states
+  const [isTouching, setIsTouching] = useState(false);
+  const [touchPos, setTouchPos] = useState({ x: 0, y: 0 });
+  // Add scroll prevention state and timer
+  const [preventScroll, setPreventScroll] = useState(false);
+  const scrollTimeoutRef = useRef<number | null>(null);
   const { isDark } = useTheme();
 
   // Detect mobile devices
@@ -107,6 +113,37 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
     };
   }, [imageUrl, isMobile]);
 
+  useEffect(() => {
+    const handleTouchMove = (e: TouchEvent) => {
+      if (preventScroll) {
+        e.preventDefault();
+      }
+    };
+
+    if (preventScroll) {
+      // Prevent scroll on the entire document when touching the color picker
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.body.style.overflow = '';
+    };
+  }, [preventScroll]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const updateZoomPreview = useCallback((canvasX: number, canvasY: number) => {
     const canvas = canvasRef.current;
     const zoomCanvas = zoomCanvasRef.current;
@@ -115,6 +152,11 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
     const ctx = canvas.getContext('2d');
     const zoomCtx = zoomCanvas.getContext('2d');
     if (!ctx || !zoomCtx) return;
+
+    // Validate input coordinates
+    if (canvasX < 0 || canvasY < 0 || canvasX >= canvas.width || canvasY >= canvas.height) {
+      return;
+    }
 
     const zoomSize = isMobile ? 60 : 80;
     const sourceSize = zoomSize / zoomLevel;
@@ -130,11 +172,17 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
     const sourceY = Math.max(0, Math.min(canvas.height - sourceSize, canvasY - sourceSize / 2));
 
     zoomCtx.imageSmoothingEnabled = false;
-    zoomCtx.drawImage(
-      canvas,
-      sourceX, sourceY, sourceSize, sourceSize,
-      0, 0, zoomSize, zoomSize
-    );
+    
+    try {
+      zoomCtx.drawImage(
+        canvas,
+        sourceX, sourceY, sourceSize, sourceSize,
+        0, 0, zoomSize, zoomSize
+      );
+    } catch (error) {
+      console.warn('Error drawing zoom preview:', error);
+      return;
+    }
 
     zoomCtx.strokeStyle = isDark ? '#ffffff' : '#000000';
     zoomCtx.lineWidth = 1;
@@ -166,6 +214,9 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
   };
 
   const handleCanvasClick = useCallback(async (event: React.MouseEvent<HTMLCanvasElement>) => {
+    // Only handle click if not on mobile or if mobile user isn't actively dragging
+    if (isMobile && isTouching) return;
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -186,10 +237,10 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
     
     onColorSelect(hex);
     await copyToClipboard(hex);
-  }, [onColorSelect]);
+  }, [onColorSelect, isMobile, isTouching]);
 
   const handleCanvasMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (isMobile) return; // Disable hover effects on mobile
+    if (isMobile) return; // Desktop only
     
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -217,6 +268,164 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
 
     updateZoomPreview(x, y);
   }, [updateZoomPreview, isMobile]);
+
+  // New mobile touch handlers
+    const handleTouchStart = useCallback((event: React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isMobile) return;
+    // Remove this line: event.preventDefault();
+    setIsTouching(true);
+    
+    // Set a timeout to enable scroll prevention after 200ms
+    scrollTimeoutRef.current = setTimeout(() => {
+      setPreventScroll(true);
+    }, 200);
+    
+    const touch = event.touches[0];
+    const canvas = canvasRef.current;
+    if (!canvas || !touch) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const x = (touch.clientX - rect.left) * scaleX;
+    const y = (touch.clientY - rect.top) * scaleY;
+
+    // Validate coordinates before proceeding
+    if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) {
+      return;
+    }
+
+    setTouchPos({ 
+      x: touch.clientX, 
+      y: touch.clientY 
+    });
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const imageData = ctx.getImageData(x, y, 1, 1);
+    const [r, g, b] = imageData.data;
+    
+    const hex = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    setPreviewColor(hex);
+
+    // Add a small delay before updating zoom preview to ensure proper initialization
+    requestAnimationFrame(() => {
+      updateZoomPreview(x, y);
+    });
+  }, [isMobile, updateZoomPreview]);
+
+  const handleTouchMove = useCallback((event: React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isMobile || !isTouching) return;
+    
+    // Rely on `touch-action: none` for preventing default behavior on the canvas itself
+    // and the document-level listener for page scroll.
+    // No longer calling event.preventDefault() here.
+    
+    const touch = event.touches[0];
+    const canvas = canvasRef.current;
+    if (!canvas || !touch) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const x = (touch.clientX - rect.left) * scaleX;
+    const y = (touch.clientY - rect.top) * scaleY;
+
+    // Validate coordinates before proceeding
+    if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) {
+      return;
+    }
+
+    setTouchPos({ 
+      x: touch.clientX, 
+      y: touch.clientY 
+    });
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const imageData = ctx.getImageData(x, y, 1, 1);
+    const [r, g, b] = imageData.data;
+    
+    const hex = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    setPreviewColor(hex);
+
+    updateZoomPreview(x, y);
+  }, [isMobile, isTouching, updateZoomPreview]);
+
+  const handleTouchEnd = useCallback(async (event: React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isMobile || !isTouching) return;
+    
+    // It's generally safe to keep preventDefault in touchEnd if needed,
+    // as it's less likely to interfere with scrolling.
+    // However, ensure it's also within an event.cancelable check if kept.
+    if (event.cancelable) {
+      event.preventDefault();
+    }
+    
+    // Clear the scroll prevention timeout and reset states
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+      scrollTimeoutRef.current = null;
+    }
+    setPreventScroll(false);
+    
+    const canvas = canvasRef.current;
+    if (!canvas || !previewColor) return;
+
+    // Select the color that was being previewed
+    onColorSelect(previewColor);
+    await copyToClipboard(previewColor);
+    
+    setIsTouching(false);
+    setPreviewColor(null);
+  }, [isMobile, isTouching, previewColor, onColorSelect, copyToClipboard]); // Added copyToClipboard to dependencies
+
+  // Add touch cancel handler for when touch is interrupted
+  const handleTouchCancel = useCallback((event: React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isMobile) return;
+    
+    // Clean up states when touch is cancelled
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+      scrollTimeoutRef.current = null;
+    }
+    setPreventScroll(false);
+    setIsTouching(false);
+    setPreviewColor(null);
+  }, [isMobile]);
+
+  const getMobileTooltipPosition = () => {
+    if (!containerRef.current) return { left: 0, top: 0 };
+    
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const tooltipWidth = 200;
+    const tooltipHeight = 100;
+    const offset = -80; // Distance from touch point
+    
+    let left = touchPos.x - containerRect.left - tooltipWidth / 2 + 27;
+    let top = touchPos.y - containerRect.top - tooltipHeight - offset;
+    
+    // Keep tooltip within viewport bounds
+    const viewportWidth = window.innerWidth;
+    
+    // Horizontal positioning
+    if (touchPos.x - tooltipWidth / 2 < 10) {
+      left = 10 - containerRect.left;
+    } else if (touchPos.x + tooltipWidth / 2 > viewportWidth - 10) {
+      left = viewportWidth - tooltipWidth - 10 - containerRect.left;
+    }
+    
+    // Vertical positioning - show below touch point if no space above
+    if (touchPos.y - tooltipHeight - offset < 10) {
+      top = touchPos.y - containerRect.top + offset;
+    }
+    
+    return { left, top };
+  };
 
   const getTooltipPosition = () => {
     if (!containerRef.current) return { left: 0, top: 0 };
@@ -333,7 +542,12 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
                 setPreviewColor(null);
               }
             }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchCancel}
             className={`${isMobile ? 'cursor-pointer' : 'cursor-crosshair'} w-full shadow-lg rounded-xl`}
+            style={{ touchAction: 'none' }} // Prevent default touch behaviors
           />
         </motion.div>
 
@@ -397,6 +611,61 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
           )}
         </AnimatePresence>
 
+        {/* Mobile touch tooltip */}
+        <AnimatePresence>
+          {isMobile && isTouching && previewColor && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.1 }}
+              className="fixed z-50 pointer-events-none"
+              style={getMobileTooltipPosition()}
+            >
+              <div className={`${
+                isDark 
+                  ? 'bg-slate-800/95 text-white border-slate-600' 
+                  : 'bg-white/95 text-slate-900 border-gray-300'
+              } backdrop-blur-xl rounded-xl p-3 shadow-xl border`}>
+                
+                <div className="flex items-center space-x-3 mb-2">
+                  <div className={`rounded-lg overflow-hidden border-2 ${
+                    isDark ? 'border-slate-600' : 'border-gray-300'
+                  }`}>
+                    <canvas
+                      ref={zoomCanvasRef}
+                      className="block"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  </div>
+                  
+                  <div className="flex flex-col space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <div 
+                        className="w-6 h-6 rounded shadow-sm border border-white/20"
+                        style={{ backgroundColor: previewColor }}
+                      />
+                      <div>
+                        <div className="font-mono text-xs font-bold">{previewColor}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={`text-xs text-center ${
+                  isDark ? 'text-slate-400' : 'text-slate-500'
+                }`}>
+                  Release to select
+                </div>
+              </div>
+              
+              <div className={`absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 rotate-45 ${
+                isDark ? 'bg-slate-800/95 border-slate-600' : 'bg-white/95 border-gray-300'
+              } border-r border-b`} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <motion.p 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -405,7 +674,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
             isDark ? 'text-slate-400' : 'text-slate-600'
           }`}
         >
-          {isMobile ? 'Tap anywhere to pick a color' : 'Hover for magnified view • Click anywhere to pick a color'}
+          {isMobile ? 'Touch and drag to preview • Release to select color' : 'Hover for magnified view • Click anywhere to pick a color'}
         </motion.p>
       </div>
     </motion.div>
