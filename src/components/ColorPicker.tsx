@@ -385,7 +385,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ imageUrl, onColorSelec
   }, [isMobile, isTouching, previewColor, onColorSelect, copyToClipboard]); // Added copyToClipboard to dependencies
 
   // Add touch cancel handler for when touch is interrupted
-  const handleTouchCancel = useCallback((event: React.TouchEvent<HTMLCanvasElement>) => {
+  const handleTouchCancel = useCallback(() => {
     if (!isMobile) return;
     
     // Clean up states when touch is cancelled
