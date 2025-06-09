@@ -214,7 +214,7 @@ export const LegalModal: React.FC<LegalModalProps> = ({ isOpen, onClose, type })
             }`}>
               Limitations
             </h3>
-            <p className={`text-base leading-relaxed ${
+            <p className={`text-base pb-10 leading-relaxed ${
               isDark ? 'text-slate-300' : 'text-slate-700'
             }`}>
               In no event shall IroHana or its suppliers be liable for any damages arising 
@@ -410,7 +410,7 @@ export const LegalModal: React.FC<LegalModalProps> = ({ isOpen, onClose, type })
               </div>
             </div>
             
-            <div className="p-8 overflow-y-auto max-h-[calc(90vh-140px)]">
+            <div className="p-8 pb-10 overflow-y-auto max-h-[calc(90vh-140px)]">
               {content[type].content}
             </div>
           </motion.div>
